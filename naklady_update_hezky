@@ -1,0 +1,2 @@
+UPDATE naklady n 
+	JOIN project_overview  p on p.charge_number=n.charge_number SET n.project_overview_ID=p.ID ;
