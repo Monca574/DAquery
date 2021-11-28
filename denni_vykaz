@@ -1,0 +1,20 @@
+CREATE or REPLACE table denni_vykaz
+select
+	ROW_NUMBER() OVER (
+	ORDER BY project_id) ID,
+	Plant as plant_n,
+	`Fiscal Year` as rok,
+	period as mesic,
+	`Posting Date` as datum_zadani,
+	`Document Date` as datum_zapisu,
+	`Project Definition` as project_id,
+	`Object type` as object_type,
+	`Object` as charge_number,
+	`Val/COArea Crcy` as spend,
+	`Total Quantity` as pocet_hodin,
+	`Last name` as prijmeni,
+	`First name` as jmeno
+FROM
+	src_CJI3 sc
+WHERE `Project Definition`  is not NULL 
+;
