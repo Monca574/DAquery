@@ -1,0 +1,41 @@
+import pandas
+import sqlalchemy
+from pathlib import Path
+
+# docs
+# https://mariadb.com/resources/blog/using-sqlalchemy-with-mariadb-connector-python-part-1/
+# https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.to_sql.html
+
+slozka_s_daty = Path(r'C:\Users\lsindelka\work\czechitas\czechitas\data')
+slozka_se_skripty = Path(r'C:\Users\lsindelka\work\czechitas\czechitas\q')
+
+soubory = [
+    "YPSCOSTDIST.xlsx",
+    "CN47N PRJ.XLSX",
+    "CJI3.xlsx",
+    "calendar_upraveny.xlsx"
+]
+
+engine = sqlalchemy.create_engine(
+    "mariadb+mariadbconnector://uzivatel:supertajneheslo@localhost:3306/czechitas")
+
+nase_datatypes = {
+    "Operation/Activity": sqlalchemy.types.String(length=255)
+}
+
+
+# nahrani zdrojovych dat
+for fn in soubory:
+    completni_cesta = slozka_s_daty / fn
+    sheet_dataframe = pandas.read_excel(str(completni_cesta))
+    bez_ext = fn.split('.')[0]
+    sheet_dataframe.to_sql(f'src_{bez_ext}', engine, if_exists='replace', dtype=nase_datatypes)
+
+# spusteni skriptu - transformace dat
+script_dir = Path(slozka_se_skripty)
+for f in sorted(script_dir.iterdir()):
+    if f.is_file() and f.suffix.lower() == '.sql':
+        query_txt = f.read_text()
+        # query = sqlalchemy.text(query_txt)
+        print(f"running script {f.name}")
+        engine.execute(query_txt)
