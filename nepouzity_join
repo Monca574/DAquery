@@ -1,0 +1,68 @@
+CREATE  or REPLACE  VIEW  skarede_CN as
+WITH T AS (
+	SELECT 
+	*,
+	cost_element is not null,
+	status = 'OPEN',
+	ROW_NUMBER () OVER (
+		PARTITION BY project_id 
+		ORDER BY cost_element is not null DESC ,
+				status = 'OPEN' DESC )  row_num
+	from 
+	project_overview po
+	WHERE  charge_number  is not NULL 
+)
+SELECT
+	po.project_id as p_project_id,
+	project_desc as project_desc,
+	po.wbs_element as p_wbs_element,
+	network as network,
+	activity as activity,
+	owning_plant as owning_plant,
+	plant as plant,
+	order_category as order_category,
+	work_center as work_center,
+	activity_type as activity_type,
+	cost_element as cost_element,
+	po.charge_number as p_charge_number,
+	keycode as keycode,
+	status as status,
+	plant_labor as plant_labor,
+	work_type as work_type,
+	n.wbs_element as n_wbs_element,
+	n.project_id as n_project_id,
+	order_n as order_n,
+	operation_activity as operation_activity,
+	n.charge_number as n_charge_number,
+	typ as typ,
+	amt_01 as amt_01,
+	amt_02 as amt_02,
+	amt_03 as amt_03,
+	amt_04 as amt_04,
+	amt_05 as amt_05, 
+	amt_06 as amt_06,
+	amt_07 as amt_07, 
+	amt_08 as amt_08,
+	amt_09 as amt_09,
+	amt_10 as amt_10, 
+	amt_11 as amt_11,
+	amt_12 as amt_12, 
+	amt_year as amt_year,
+	amt_total as amt_total
+FROM
+	naklady n
+	JOIN T po on n.project_id=po.project_id WHERE (po.row_num=1 and n.charge_number not IN (SELECT n_charge_number from tbl_pekny_join_pokus_2 tpjp)) ;
+
+	
+SELECT 
+	*
+FROM skarede_cn sc ;
+	
+	
+	INSERT  INTO  tbl_pekny_join_pokus_2
+SELECT
+	*	
+FROM 
+	skarede_cn ;
+
+	
