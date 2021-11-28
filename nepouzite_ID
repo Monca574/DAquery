@@ -1,0 +1,86 @@
+/*vytvoří tabulku náklady*/
+create OR REPLACE table naklady 
+select
+	ROW_NUMBER () OVER (
+	ORDER BY project_id) ID,
+	-999999 AS project_overview_ID,
+	sy.`WBS Element`as wbs_element,
+	SUBSTRING(sy.`WBS Element`, 1, 9) as project_id,
+	`Order` as order_n,
+	LPAD(`Operation/Activity`, 4, 0) as operation_activity,
+	CONCAT(`Order`, ' ', COALESCE(LPAD(`Operation/Activity`, 4, 0), ''))as charge_number,
+	`Type` as typ,
+	`Amt 01` as amt_01,
+	`Amt 02` as amt_02,
+	`Amt 03` as amt_03,
+	`Amt 04` as amt_04,
+	`Amt 05` as amt_05,
+	`Amt 06` as amt_06,
+	`Amt 07` as amt_07,
+	`Amt 08` as amt_08,
+	`Amt 09` as amt_09,
+	`Amt 10` as amt_10,
+	`Amt 11` as amt_11,
+	`Amt 12` as amt_12,
+	`Amt for Year` as amt_year,
+	`Amt Total` as amt_total
+FROM
+	src_YPSCOSTDIST sy 
+WHERE
+	`Order` is not NULL;
+
+/* nahrání lines ID s hezkým charge number*/
+UPDATE naklady n 
+	JOIN project_overview  p on p.charge_number=n.charge_number SET n.project_overview_ID=p.ID ;
+
+/*WITH T AS (
+	SELECT 
+	project_id,
+	ID,
+	ROW_NUMBER () OVER (
+		PARTITION BY project_id 
+		ORDER BY cost_element is not null DESC ,
+				status = 'OPEN' DESC )  row_num
+	from 
+	project_overview po
+	WHERE  charge_number  is not NULL 
+	) 
+	
+/* nahrání ID lines s nehezekým charge numbers*/	
+;
+UPDATE
+	naklady n
+JOIN (
+	SELECT
+		project_id,
+		ID,
+		ROW_NUMBER () OVER (
+		PARTITION BY project_id
+	ORDER BY
+		cost_element is not null DESC ,
+				status = 'OPEN' DESC ) row_num
+	from
+		project_overview po
+	WHERE
+		charge_number is not NULL 
+	) T on
+	n.project_id = T.project_id SET
+	n.project_overview_ID = T.ID
+WHERE
+	(row_num = 1
+		and n.project_overview_ID = -999999);
+	
+/* přidání primárního klíèe */ 	
+ALTER  TABLE naklady 
+	ADD CONSTRAINT primary key (ID);
+
+ALTER  TABLE project_overview 
+	ADD CONSTRAINT primary key (ID);
+	
+ALTER  TABLE denni_vykaz 
+	ADD CONSTRAINT primary key (ID);
+	
+/*přidání cizího klíèe*/
+
+ALTER  TABLE naklady 
+	ADD CONSTRAINT foreign key (project_overview_ID) references project_overview(ID) ;
