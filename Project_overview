@@ -1,0 +1,32 @@
+CREATE OR REPLACE TABLE project_overview
+SELECT
+ROW_NUMBER() OVER (ORDER BY project_id) as ID,
+`Project definition` AS project_id,
+`Proj Def Desc` AS project_desc,
+`WBS element` AS wbs_element,
+`Network` AS network,
+`Activity` AS activity,
+`Owning Plant` AS owning_plant,
+`Plant` AS plant,
+`Order category` AS order_category,
+`Work center` AS work_center,
+`Activity type` AS activity_type,
+`Cost element` AS cost_element,
+CONCAT(Network, ' ',LPAD(Activity ,4,'0')) AS charge_number,
+SUBSTRING(`Proj Def Desc`,1,5) AS keycode,
+CASE
+	WHEN `Order category` = 10 THEN 'NON NWA'
+	WHEN `Order category` = 20 THEN SUBSTRING( trim(SUBSTRING_INDEX(`Status`, '//', -1)), 1 ,4)
+END  AS status,
+CASE
+	WHEN `Cost element` IS NOT NULL THEN CONCAT('C_',`Cost element`)
+	WHEN `Cost element` IS NULL THEN CONCAT('L_',Plant,'_',`Work center`,'_', COALESCE (`Activity type`,''))
+END AS plant_labor,
+CASE 
+	WHEN `Activity type` LIKE 'OUT%' THEN 'HTS'
+	WHEN `Order category` = 10 THEN 'Order'
+	WHEN `Cost element` IS NULL THEN 'Labor' ELSE 'Cost'
+END AS work_type
+FROM `src_CN47N PRJ` scnp 
+where `Activity` is not null
+;
