@@ -1,0 +1,21 @@
+UPDATE
+	naklady n
+JOIN (
+	SELECT
+		project_id,
+		ID,
+		ROW_NUMBER() OVER (
+		PARTITION BY project_id
+	ORDER BY
+		cost_element is not null DESC ,
+				status = 'OPEN' DESC ) row_num
+	from
+		project_overview po
+	WHERE
+		charge_number is not NULL 
+	) T on
+	n.project_id = T.project_id SET
+	n.project_overview_ID = T.ID
+WHERE
+	(row_num = 1
+		and n.project_overview_ID = -999999);
